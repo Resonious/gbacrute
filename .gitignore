@@ -2,6 +2,8 @@
 *.gba
 *.sav
 
+maxmod_data/*.bak
+
 build/soundbank*
 build/*.o
 build/*.d

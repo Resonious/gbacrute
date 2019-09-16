@@ -26,7 +26,7 @@ int main() {
     mmInitDefault( (mm_addr)soundbank_bin, 8 );
 
 	// Start playing module
-	mmStart( MOD_INTERNALMECHANICS, MM_PLAY_LOOP );
+	mmStart( MOD_HAPPYHUMBLE, MM_PLAY_LOOP );
 
 	mm_sound_effect crows = {
 		{ SFX_CROWS } ,			// id
