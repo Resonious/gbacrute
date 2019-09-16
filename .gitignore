@@ -1,0 +1,9 @@
+*.elf
+*.gba
+*.sav
+
+build/soundbank*
+build/*.o
+build/*.d
+build/*.map
+build/*.bin
