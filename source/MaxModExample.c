@@ -8,13 +8,45 @@
 #include "soundbank_bin.h"
 
 
+#define OAM_SIZE 128
+
+
 //////////////////////////////////////////////
 //                  Sprites
 //////////////////////////////////////////////
-void ctInitSprites() {
-    // Shadow of the OAM TODO put in struct or what
-    OBJATTR obj_buffer[128];
-    OBJAFFINE *const obj_aff_buffer = (OBJAFFINE*)obj_buffer;
+
+//
+// Sprites state
+//
+typedef struct ct_sprites {
+    // Shadow of the OAM
+    OBJATTR obj_buffer[OAM_SIZE];
+    OBJAFFINE *obj_aff_buffer;
+} ct_sprites;
+
+//
+// Initialize sprites
+//
+void ctInitSprites(ct_sprites *spr) {
+    // Set up shadows
+    spr->obj_aff_buffer = (OBJAFFINE*)spr->obj_buffer;
+
+    // Hide each object
+    u32 nn   = OAM_SIZE;
+    u32 *dst = (u32*)spr->obj_buffer;
+    while(nn--)
+    {
+        // TODO this is very wack. Make a struct for attr0
+        *dst++= ATTR0_DISABLED;
+        *dst++= 0;
+    }
+
+    // Copy shadow into real OAM (will probably want a function at some point)
+    u32 count           = 128;
+    OBJATTR *real_oam   = OAM;
+    OBJATTR *shadow_oam = spr->obj_buffer;
+    while (count--)
+		*real_oam++ = *shadow_oam++;
 }
 
 
@@ -62,7 +94,7 @@ void ctInitSound(ct_sound *s) {
         255,    // panning
     };
 
-    s->crows_handle = NULL;
+    s->crows_handle = 0;
 }
 
 //
@@ -90,19 +122,19 @@ int main() {
     irqInit();
 
     ct_sound sound;
+    ct_sprites sprites;
 
     ctInitSound(&sound);
+    ctInitSprites(&sprites);
 
     // Main loop
     do {
-        // Variables
-        int keys_pressed, keys_released;
-
         // Frame stuff
         VBlankIntrWait();
         mmFrame();
 
         // Grab input
+        int keys_pressed, keys_released;
         scanKeys();
 
         keys_pressed = keysDown();
