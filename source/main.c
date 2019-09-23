@@ -16,6 +16,61 @@
 //////////////////////////////////////////////
 
 //
+// Sprite structs
+//
+
+// SPRITE is a struct-based alternative to OBJATTR.
+typedef struct SPRITE_ATTR0 {
+    int y          : 8;
+    int obj_mode   : 2;
+    int gfx_mode   : 2;
+    int mosaic     : 1;
+    int color_mode : 1;
+    int shape      : 2;
+} SPRITE_ATTR0;
+
+const int SPRITE_OBJ_MODE_REGULAR       = 0b00;
+const int SPRITE_OBJ_MODE_AFFINE        = 0b01;
+const int SPRITE_OBJ_MODE_HIDE          = 0b10;
+const int SPRITE_OBJ_MODE_AFFINE_DOUBLE = 0b11;
+
+const int SPRITE_GFX_MODE_REGULAR       = 0b00;
+const int SPRITE_GFX_MODE_ALPHA         = 0b01;
+const int SPRITE_GFX_MODE_WINDOW        = 0b10;
+const int SPRITE_GFX_MODE_DONT_USE      = 0b11;
+
+typedef struct SPRITE_REGULAR_ATTR1 {
+    int x          : 9;
+    int dummy      : 3;
+    int hflip      : 1;
+    int vflip      : 1;
+    int size       : 2;
+} SPRITE_REGULAR_ATTR1;
+
+typedef struct SPRITE_AFFINE_ATTR1 {
+    int x          : 9;
+    int affine_idx : 5;
+    int size       : 2;
+} SPRITE_AFFINE_ATTR1;
+
+typedef struct SPRITE_ATTR2 {
+    int tile_idx   : 10;
+    int priority   : 2;
+    int palbank    : 4;
+} SPRITE_ATTR2;
+
+typedef struct SPRITE {
+    SPRITE_ATTR0 attr0;
+    union {
+        SPRITE_AFFINE_ATTR1  attr1_affine;
+        SPRITE_REGULAR_ATTR1 attr1_regular;
+    };
+    SPRITE_ATTR2 attr2;
+    u16 dummy;
+} ALIGN(4) SPRITE;
+
+
+//
 // Sprites state
 //
 typedef struct ct_sprites {
@@ -27,24 +82,20 @@ typedef struct ct_sprites {
 //
 // Initialize sprites
 //
-void ctInitSprites(ct_sprites *spr) {
+void ctInitSprites(ct_sprites *s) {
     // Set up shadows
-    spr->obj_aff_buffer = (OBJAFFINE*)spr->obj_buffer;
+    s->obj_aff_buffer = (OBJAFFINE*)s->obj_buffer;
 
-    // Hide each object
-    u32 nn   = OAM_SIZE;
-    u32 *dst = (u32*)spr->obj_buffer;
+    // Clear and hide each object
+    u32 nn      = OAM_SIZE;
+    SPRITE *spr = (SPRITE*)s->obj_buffer;
     while(nn--)
-    {
-        // TODO this is very wack. Make a struct for attr0
-        *dst++= ATTR0_DISABLED;
-        *dst++= 0;
-    }
+        spr->attr0.obj_mode = SPRITE_OBJ_MODE_HIDE;
 
     // Copy shadow into real OAM (will probably want a function at some point)
     u32 count           = 128;
     OBJATTR *real_oam   = OAM;
-    OBJATTR *shadow_oam = spr->obj_buffer;
+    OBJATTR *shadow_oam = s->obj_buffer;
     while (count--)
 		*real_oam++ = *shadow_oam++;
 }
