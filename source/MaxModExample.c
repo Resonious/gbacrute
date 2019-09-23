@@ -7,82 +7,108 @@
 #include "soundbank.h"
 #include "soundbank_bin.h"
 
-int main() {
 
-	irqInit();
+//////////////////////////////////////////////
+//                  Sprites
+//////////////////////////////////////////////
+void ctInitSprites() {
+    // Shadow of the OAM TODO put in struct or what
+    OBJATTR obj_buffer[128];
+    OBJAFFINE *const obj_aff_buffer = (OBJAFFINE*)obj_buffer;
+}
 
-	// Maxmod requires the vblank interrupt to reset sound DMA.
-	// Link the VBlank interrupt to mmVBlank, and enable it. 
-	irqSet( IRQ_VBLANK, mmVBlank );
-	irqEnable(IRQ_VBLANK);
 
-	consoleDemoInit();
+//////////////////////////////////////////////
+//                  Sound
+//////////////////////////////////////////////
 
-	// ansi escape sequence to clear screen and home cursor
-	// /x1b[line;columnH
-	iprintf("\x1b[2J");
+//
+// Sound state
+//
+typedef struct ct_sound {
+    mm_sound_effect crows;
+    mm_sound_effect invwhistle;
+    mm_sfxhand crows_handle; // for cancelling sound-in-progress
+} ct_sound;
 
-	// initialise maxmod with soundbank and 8 channels
+//
+// Initialize sound
+//
+void ctInitSound(ct_sound *s) {
+    // Maxmod requires the vblank interrupt to reset sound DMA.
+    // Link the VBlank interrupt to mmVBlank, and enable it.
+    irqSet( IRQ_VBLANK, mmVBlank );
+    irqEnable(IRQ_VBLANK);
+
+    // initialise maxmod with soundbank and 8 channels
     mmInitDefault( (mm_addr)soundbank_bin, 8 );
 
-	// Start playing module
-	mmStart( MOD_HAPPYHUMBLE, MM_PLAY_LOOP );
+    // Start playing module
+    mmStart( MOD_HAPPYHUMBLE, MM_PLAY_LOOP );
 
-	mm_sound_effect crows = {
-		{ SFX_CROWS } ,			// id
-		(int)(1.0f * (1<<10)),	// rate
-		0,		// handle
-		255,	// volume
-		0,		// panning
-	};
+    s->crows = (mm_sound_effect){
+        { SFX_CROWS } ,            // id
+        (int)(1.0f * (1<<10)),    // rate
+        0,        // handle
+        255,    // volume
+        0,        // panning
+    };
 
-	mm_sound_effect invwhistle = {
-		{ SFX_INVERSEWHISTLE } ,// id
-		(int)(1.0f * (1<<10)),	// rate
-		0,		// handle
-		255,	// volume
-		255,	// panning
-	};
+    s->invwhistle = (mm_sound_effect){
+        { SFX_INVERSEWHISTLE } ,// id
+        (int)(1.0f * (1<<10)),    // rate
+        0,        // handle
+        255,    // volume
+        255,    // panning
+    };
 
-	// ansi escape sequence to clear screen and home cursor
-	// /x1b[line;columnH
-	iprintf("\x1b[2J");
+    s->crows_handle = NULL;
+}
 
-	// ansi escape sequence to set print co-ordinates
-	// /x1b[line;columnH
-	iprintf("\x1b[0;8HMaxMod Audio demo");
-	iprintf("\x1b[3;0HHold A for crows");
-	iprintf("\x1b[4;0HPress B for whistle sound");
-	
-	// sound effect handle (for cancelling it later)
-	mm_sfxhand crows_handle = 0;
+//
+// Update sound
+//
+void ctUpdateSound(ct_sound *s, int keys_pressed, int keys_released) {
+    // Play looping crows sound effect out of left speaker if A button is pressed
+    if ( keys_pressed & KEY_A ) {
+        s->crows_handle = mmEffectEx(&s->crows);
+    }
 
-	do {
+    // stop crows sound when A button is released
+    if ( keys_released & KEY_A ) {
+        mmEffectCancel(s->crows_handle);
+    }
 
-		int keys_pressed, keys_released;
-		
-		VBlankIntrWait();
-		mmFrame();
-	 
-		scanKeys();
+    // Play explosion sound effect out of right speaker if B button is pressed
+    if ( keys_pressed & KEY_B ) {
+        mmEffectEx(&s->invwhistle);
+    }
+}
 
-		keys_pressed = keysDown();
-		keys_released = keysUp();
 
-		// Play looping crows sound effect out of left speaker if A button is pressed
-		if ( keys_pressed & KEY_A ) {
-			crows_handle = mmEffectEx(&crows);
-		}
+int main() {
+    irqInit();
 
-		// stop crows sound when A button is released
-		if ( keys_released & KEY_A ) {
-			mmEffectCancel(crows_handle);
-		}
+    ct_sound sound;
 
-		// Play explosion sound effect out of right speaker if B button is pressed
-		if ( keys_pressed & KEY_B ) {
-			mmEffectEx(&invwhistle);
-		}
+    ctInitSound(&sound);
 
-	} while( 1 );
+    // Main loop
+    do {
+        // Variables
+        int keys_pressed, keys_released;
+
+        // Frame stuff
+        VBlankIntrWait();
+        mmFrame();
+
+        // Grab input
+        scanKeys();
+
+        keys_pressed = keysDown();
+        keys_released = keysUp();
+
+        // Run update functions
+        ctUpdateSound(&sound, keys_pressed, keys_released);
+    } while( 1 );
 }
