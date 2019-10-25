@@ -73,16 +73,16 @@ typedef struct SPRITE {
 //
 // Sprites state
 //
-typedef struct ct_sprites {
+typedef struct ka_sprites {
     // Shadow of the OAM
     OBJATTR obj_buffer[OAM_SIZE];
     OBJAFFINE *obj_aff_buffer;
-} ct_sprites;
+} ka_sprites;
 
 //
 // Initialize sprites
 //
-void ctInitSprites(ct_sprites *s) {
+void kaInitSprites(ka_sprites *s) {
     // Set up shadows
     s->obj_aff_buffer = (OBJAFFINE*)s->obj_buffer;
 
@@ -108,16 +108,16 @@ void ctInitSprites(ct_sprites *s) {
 //
 // Sound state
 //
-typedef struct ct_sound {
-    mm_sound_effect crows;
+typedef struct ka_sound {
+    // mm_sound_effect crows;
     mm_sound_effect invwhistle;
     mm_sfxhand crows_handle; // for cancelling sound-in-progress
-} ct_sound;
+} ka_sound;
 
 //
 // Initialize sound
 //
-void ctInitSound(ct_sound *s) {
+void kaInitSound(ka_sound *s) {
     // Maxmod requires the vblank interrupt to reset sound DMA.
     // Link the VBlank interrupt to mmVBlank, and enable it.
     irqSet( IRQ_VBLANK, mmVBlank );
@@ -129,14 +129,6 @@ void ctInitSound(ct_sound *s) {
     // Start playing module
     mmStart( MOD_HAPPYHUMBLE, MM_PLAY_LOOP );
 
-    s->crows = (mm_sound_effect){
-        { SFX_CROWS } ,            // id
-        (int)(1.0f * (1<<10)),    // rate
-        0,        // handle
-        255,    // volume
-        0,        // panning
-    };
-
     s->invwhistle = (mm_sound_effect){
         { SFX_INVERSEWHISTLE } ,// id
         (int)(1.0f * (1<<10)),    // rate
@@ -145,21 +137,21 @@ void ctInitSound(ct_sound *s) {
         255,    // panning
     };
 
-    s->crows_handle = 0;
+    // s->crows_handle = 0;
 }
 
 //
 // Update sound
 //
-void ctUpdateSound(ct_sound *s, int keys_pressed, int keys_released) {
+void kaUpdateSound(ka_sound *s, int keys_pressed, int keys_released) {
     // Play looping crows sound effect out of left speaker if A button is pressed
     if ( keys_pressed & KEY_A ) {
-        s->crows_handle = mmEffectEx(&s->crows);
+        // s->crows_handle = mmEffectEx(&s->crows);
     }
 
     // stop crows sound when A button is released
     if ( keys_released & KEY_A ) {
-        mmEffectCancel(s->crows_handle);
+        // mmEffectCancel(s->crows_handle);
     }
 
     // Play explosion sound effect out of right speaker if B button is pressed
@@ -172,11 +164,11 @@ void ctUpdateSound(ct_sound *s, int keys_pressed, int keys_released) {
 int main() {
     irqInit();
 
-    ct_sound sound;
-    ct_sprites sprites;
+    ka_sound sound;
+    ka_sprites sprites;
 
-    ctInitSound(&sound);
-    ctInitSprites(&sprites);
+    kaInitSound(&sound);
+    kaInitSprites(&sprites);
 
     // Main loop
     do {
@@ -192,6 +184,6 @@ int main() {
         keys_released = keysUp();
 
         // Run update functions
-        ctUpdateSound(&sound, keys_pressed, keys_released);
+        kaUpdateSound(&sound, keys_pressed, keys_released);
     } while( 1 );
 }
