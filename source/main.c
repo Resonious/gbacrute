@@ -38,7 +38,10 @@ void kaInitSound(ka_sound *s) {
     mmInitDefault( (mm_addr)soundbank_bin, 8 );
 
     // Start playing module
-    mmStart( MOD_INTERNALMECHANICS, MM_PLAY_LOOP );
+
+    // assertions here because I'm fucked in the head
+    if (sizeof(SPRITE) == 64)
+        mmStart( MOD_INTERNALMECHANICS, MM_PLAY_LOOP );
 
     s->invwhistle = (mm_sound_effect){
         { SFX_INVERSEWHISTLE } ,// id
@@ -54,19 +57,19 @@ void kaInitSound(ka_sound *s) {
 //
 // Update sound
 //
-void kaUpdateSound(ka_sound *s, int keys_pressed, int keys_released) {
+void kaUpdateSound(ka_sound *s, KEYS keys) {
     // Play looping crows sound effect out of left speaker if A button is pressed
-    if ( keys_pressed & KEY_A ) {
+    if ( keys.pressed & KEY_A ) {
         // s->crows_handle = mmEffectEx(&s->crows);
     }
 
     // stop crows sound when A button is released
-    if ( keys_released & KEY_A ) {
+    if ( keys.released & KEY_A ) {
         // mmEffectCancel(s->crows_handle);
     }
 
     // Play explosion sound effect out of right speaker if B button is pressed
-    if ( keys_pressed & KEY_B ) {
+    if ( keys.pressed & KEY_B ) {
         mmEffectEx(&s->invwhistle);
     }
 }
@@ -90,14 +93,14 @@ int main() {
         mmFrame();
 
         // Grab input
-        int keys_pressed, keys_released;
+        KEYS keys;
         scanKeys();
-
-        keys_pressed = keysDown();
-        keys_released = keysUp();
+        keys.pressed  = keysDown();
+        keys.released = keysUp();
 
         // Run update functions
-        kaUpdateSound(&sound, keys_pressed, keys_released);
-        kaUpdateTestGuy(&test);
+        kaUpdateSound(&sound, keys);
+        kaUpdateTestGuy(&test, &sprites, keys);
+        kaUpdateSprites(&sprites);
     } while( 1 );
 }

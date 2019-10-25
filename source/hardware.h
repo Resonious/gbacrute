@@ -2,6 +2,8 @@
 #define HARDWARE_H
 #include <gba.h>
 
+#define PACKED __attribute__((__packed__))
+
 //////////////////////////////////////////////
 //                  Sprites
 //////////////////////////////////////////////
@@ -20,7 +22,10 @@ typedef struct SPRITE_ATTR0 {
     int mosaic     : 1;
     int color_mode : 1;
     int shape      : 2;
-} SPRITE_ATTR0;
+} PACKED SPRITE_ATTR0;
+
+#define SPRITE_COLOR_MODE_4BPP (0)
+#define SPRITE_COLOR_MODE_8BPP (1)
 
 #define SPRITE_OBJ_MODE_REGULAR       (0b00)
 #define SPRITE_OBJ_MODE_AFFINE        (0b01)
@@ -38,19 +43,19 @@ typedef struct SPRITE_REGULAR_ATTR1 {
     int hflip      : 1;
     int vflip      : 1;
     int size       : 2;
-} SPRITE_REGULAR_ATTR1;
+} PACKED SPRITE_REGULAR_ATTR1;
 
 typedef struct SPRITE_AFFINE_ATTR1 {
     int x          : 9;
     int affine_idx : 5;
     int size       : 2;
-} SPRITE_AFFINE_ATTR1;
+} PACKED SPRITE_AFFINE_ATTR1;
 
 typedef struct SPRITE_ATTR2 {
     int tile_idx   : 10;
     int priority   : 2;
     int palbank    : 4;
-} SPRITE_ATTR2;
+} PACKED SPRITE_ATTR2;
 
 typedef struct SPRITE {
     SPRITE_ATTR0 attr0;
@@ -60,11 +65,13 @@ typedef struct SPRITE {
     };
     SPRITE_ATTR2 attr2;
     u16 dummy;
-} ALIGN(4) SPRITE;
+} ALIGN(4) PACKED SPRITE;
 
 
 
-// From tonc
+//
+// Tile structs
+//
 
 // tile 8x8@4bpp: 32bytes; 8 ints
 typedef struct { u32 data[8];  } TILE, TILE4;
@@ -82,4 +89,15 @@ typedef TILE8 CHARBLOCK8[256];
 
 // Copy a tile from data to sprite-mem, tile 12
 //tile_mem[4][12] = *(TILE*)spriteData;
+
+
+//
+// Key states (not really hardware but everyone needs them...)
+//
+
+typedef struct KEYS {
+    int pressed;
+    int released;
+} KEYS;
+
 #endif

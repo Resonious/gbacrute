@@ -10,5 +10,6 @@ typedef struct ka_test_guy {
 } ka_test_guy;
 
 void kaInitTestGuy(ka_test_guy *, ka_sprites *);
-void kaUpdateTestGuy(ka_test_guy *);
+void kaUpdateTestGuy(ka_test_guy *, ka_sprites *, KEYS keys);
+
 #endif
