@@ -3,8 +3,8 @@
 #include "graphics/komoju.h"
 
 void kaInitTestGuy(ka_test_guy *guy, ka_sprites *sprites) {
-    guy->x = 0;
-    guy->y = 0;
+    guy->dx = 0;
+    guy->dy = 0;
     guy->spr = (SPRITE *)sprites->obj_buffer;
     sprites->allocated_objs += 1;
     
@@ -40,26 +40,55 @@ void kaInitTestGuy(ka_test_guy *guy, ka_sprites *sprites) {
 }
 
 
+static void readInput(ka_test_guy *guy, KEYS keys) {
+    if (keys.pressed & KEY_LEFT)  guy->mx = -1;
+    if (keys.pressed & KEY_RIGHT) guy->mx =  1;
+    if (keys.pressed & KEY_UP)    guy->my = -1;
+    if (keys.pressed & KEY_DOWN)  guy->my =  1;
+
+    if (guy->mx < 0 && keys.released & KEY_LEFT)  guy->mx = 0;
+    if (guy->mx > 0 && keys.released & KEY_RIGHT) guy->mx = 0;
+    if (guy->my < 0 && keys.released & KEY_UP)    guy->my = 0;
+    if (guy->my > 0 && keys.released & KEY_DOWN)  guy->my = 0;
+}
+
+static inline int signof(int x) {
+    if      (x < 0) return -1;
+    else if (x > 0) return 1;
+    else            return 0;
+}
+
+static void moveGuy(ka_test_guy *guy) {
+    // Accelerate from input
+    if (guy->mx != 0) guy->ddx = guy->mx * GUY_ACCEL;
+    else              guy->ddx = -signof(guy->dx);
+    if (guy->my != 0) guy->ddy = guy->my * GUY_ACCEL;
+    else              guy->ddy = -signof(guy->dy);
+
+    // Speed up from acceleration
+    guy->dx += guy->ddx;
+    guy->dy += guy->ddy;
+    if (guy->dx >  GUY_SPEED) guy->dx =  GUY_SPEED;
+    if (guy->dx < -GUY_SPEED) guy->dx = -GUY_SPEED;
+    if (guy->dy >  GUY_SPEED) guy->dy =  GUY_SPEED;
+    if (guy->dy < -GUY_SPEED) guy->dy = -GUY_SPEED;
+
+    // Displace from speed
+    guy->spr->attr1_regular.x += guy->dx;
+    guy->spr->attr0.y         += guy->dy;
+}
+
+static void animateGuy(ka_test_guy *guy) {
+    if (guy->dx < 0)
+        guy->spr->attr1_regular.hflip = 1;
+    else if (guy->dx > 0)
+        guy->spr->attr1_regular.hflip = 0;
+}
+
+
 void kaUpdateTestGuy(ka_test_guy *guy, ka_sprites *sprites, KEYS keys) {
-    bool moved = false;
-
-    if (keys.pressed & KEY_LEFT) {
-        guy->spr->attr1_regular.x -= 10;
-        moved = true;
-    }
-    if (keys.pressed & KEY_RIGHT) {
-        guy->spr->attr1_regular.x += 10;
-        moved = true;
-    }
-    if (keys.pressed & KEY_UP) {
-        guy->spr->attr0.y -= 10;
-        moved = true;
-    }
-    if (keys.pressed & KEY_DOWN) {
-        guy->spr->attr0.y += 10;
-        moved = true;
-    }
-
-    if (moved)
-        kaUpdateOAM(sprites, 0, 1);
+    readInput(guy, keys);
+    moveGuy(guy);
+    animateGuy(guy);
+    kaUpdateOAM(sprites, 0, 1);
 }

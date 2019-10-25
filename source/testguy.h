@@ -4,8 +4,13 @@
 #include "hardware.h"
 #include "sprites.h"
 
+#define GUY_SPEED (4)
+#define GUY_ACCEL (1)
+
 typedef struct ka_test_guy {
-    int x, y;
+    int dx, dy;   // velocity
+    int ddx, ddy; // acceleration
+    int mx, my;   // "moving"
     SPRITE *spr;
 } ka_test_guy;
 
