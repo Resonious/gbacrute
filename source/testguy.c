@@ -74,8 +74,8 @@ static void moveGuy(ka_test_guy *guy) {
     if (guy->dy < -GUY_SPEED) guy->dy = -GUY_SPEED;
 
     // Displace from speed
-    guy->spr->attr1_regular.x += guy->dx;
-    guy->spr->attr0.y         += guy->dy;
+    guy->spr->attr1_regular.x += guy->dx / GUY_SPEED_FACTOR;
+    guy->spr->attr0.y         += guy->dy / GUY_SPEED_FACTOR;
 }
 
 static void animateGuy(ka_test_guy *guy) {

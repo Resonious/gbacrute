@@ -4,8 +4,9 @@
 #include "hardware.h"
 #include "sprites.h"
 
-#define GUY_SPEED (4)
-#define GUY_ACCEL (1)
+#define GUY_SPEED (20)
+#define GUY_ACCEL (4)
+#define GUY_SPEED_FACTOR (5)
 
 typedef struct ka_test_guy {
     int dx, dy;   // velocity
